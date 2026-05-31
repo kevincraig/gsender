@@ -1,0 +1,203 @@
+name: Build
+
+# Runs on every push/PR for CI, and on version tags to produce release artifacts.
+#
+# Tag format: v1.2.3
+# On a tag push, each platform job builds its installer and uploads it to the
+# GitHub Release that the release.yml workflow created as a draft.
+
+on:
+  push:
+    branches: [master, dev, 'features/**']
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [master]
+
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # macOS (builds both Intel and Apple Silicon DMGs)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Code-signing secrets — only needed for real releases, not PRs
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      CSC_LINK: ${{ secrets.CSC_LINK }}
+      CSC_IDENTITY_AUTO_DISCOVERY: ${{ github.event_name == 'pull_request' && 'false' || 'true' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'yarn'
+
+      - name: Install global tools
+        run: npm install -g yarn node-gyp
+
+      - name: Install root dependencies
+        run: yarn install --ignore-engines
+
+      - name: Install src dependencies
+        run: yarn --cwd src install --production --ignore-scripts --non-interactive
+
+      - name: Build (full production)
+        run: npm run build
+
+      - name: Package for macOS
+        run: yarn build:macos
+
+      - name: Rename artifacts
+        run: |
+          VERSION=$(node -e "console.log(require('./src/package.json').version)")
+          mkdir -p releases/macos
+          cp -af "output/gSender-${VERSION}-x64.dmg"   "releases/macos/gSender-${VERSION}-Mac-Intel.dmg"
+          cp -af "output/gSender-${VERSION}-arm64.dmg"  "releases/macos/gSender-${VERSION}-Mac-Silicon.dmg"
+          ls -lh releases/macos/
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: releases/macos/*
+          draft: true
+
+      - name: Upload artifact (PRs / branches)
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: releases/macos/*.dmg
+          retention-days: 7
+          compression-level: 0
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Windows (builds on a real Windows runner — no cross-compile needed)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'yarn'
+
+      - name: Install global tools
+        run: npm install -g yarn node-gyp
+
+      - name: Install root dependencies
+        run: yarn install --ignore-engines
+
+      - name: Install src dependencies
+        run: yarn --cwd src install --production --ignore-scripts --non-interactive
+
+      - name: Build (full production)
+        run: npm run build
+
+      - name: Package for Windows
+        run: yarn build:windows
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          VERSION=$(node -e "console.log(require('./src/package.json').version)")
+          mkdir -p releases/windows
+          cp -af "output/gSender-${VERSION}-x64.exe" "releases/windows/gSender-${VERSION}-Windows-64Bit.exe"
+          ls -lh releases/windows/
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: releases/windows/*
+          draft: true
+
+      - name: Upload artifact (PRs / branches)
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: releases/windows/*.exe
+          retention-days: 7
+          compression-level: 0
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Linux (x64 + arm64 AppImage and .deb)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'yarn'
+
+      - name: Install global tools
+        run: npm install -g yarn node-gyp
+
+      - name: Install system libraries (for electron-builder)
+        run: sudo apt-get install -y rpm
+
+      - name: Install root dependencies
+        run: yarn install --ignore-engines
+
+      - name: Install src dependencies
+        run: yarn --cwd src install --production --ignore-scripts --non-interactive
+
+      - name: Build (full production)
+        run: npm run build
+
+      - name: Package for Linux
+        run: yarn build:linux
+
+      - name: Rename artifacts
+        run: |
+          VERSION=$(node -e "console.log(require('./src/package.json').version)")
+          mkdir -p releases/linux
+          cp -af "output/gSender-${VERSION}-x86_64.AppImage" "releases/linux/gSender-${VERSION}-Linux-Intel-64Bit.AppImage"
+          cp -af "output/gSender-${VERSION}-amd64.deb"       "releases/linux/gSender-${VERSION}-Linux-Intel-64Bit.deb"
+          cp -af "output/gSender-${VERSION}-arm64.AppImage"  "releases/linux/gSender-${VERSION}-Linux-ARM-64Bit.AppImage"
+          cp -af "output/gSender-${VERSION}-arm64.deb"       "releases/linux/gSender-${VERSION}-Linux-ARM-64Bit.deb"
+          ls -lh releases/linux/
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: releases/linux/*
+          draft: true
+
+      - name: Upload artifact (PRs / branches)
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: releases/linux/*
+          retention-days: 7
+          compression-level: 0
