@@ -1,7 +1,8 @@
 #!/bin/bash
 
 __dirname="$(CDPATH= cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-electron_version=$(electron --version)
+export PATH="$__dirname/../node_modules/.bin:$PATH"
+electron_version=$(node -e "console.log('v' + require('$__dirname/../node_modules/electron/package.json').version)")
 
 display_usage() {
     yarn electron-builder -- --help
@@ -92,17 +93,45 @@ popd
 # Check if electron-rebuild is needed
 REBUILD_MARKER="$DIST_DIR/.rebuild-${electron_version}"
 
-if [ ! -f "$REBUILD_MARKER" ]; then
-    echo "Rebuilding native modules for electron ${electron_version}"
-    yarn electron-rebuild -- \
-        --version=${electron_version:1} \
-        --module-dir=dist/gsender \
-        --which-module=serialport
-    
-    # Mark that rebuild is done for this electron version
-    touch "$REBUILD_MARKER"
+# Detect target platform from args (e.g. --windows → win32)
+TARGET_PLATFORM="host"
+for arg in "$@"; do
+    case "$arg" in
+        --windows) TARGET_PLATFORM="win32" ;;
+        --linux)   TARGET_PLATFORM="linux" ;;
+        --macos)   TARGET_PLATFORM="darwin" ;;
+    esac
+done
+
+if [ "$TARGET_PLATFORM" != "win32" ] && [ "$TARGET_PLATFORM" != "linux" ] || [ "$(uname)" = "Linux" ] && [ "$TARGET_PLATFORM" = "linux" ]; then
+    if [ ! -f "$REBUILD_MARKER" ]; then
+        echo "Rebuilding native modules for electron ${electron_version}"
+        "$__dirname/../node_modules/.bin/electron-rebuild" \
+            --version=${electron_version:1} \
+            --module-dir=dist/gsender \
+            --which-module=serialport
+        touch "$REBUILD_MARKER"
+    else
+        echo "✓ Native modules already rebuilt for electron ${electron_version}, skipping..."
+    fi
 else
-    echo "✓ Native modules already rebuilt for electron ${electron_version}, skipping..."
+    echo "Cross-building for ${TARGET_PLATFORM} — skipping host rebuild, using N-API prebuilds"
+fi
+
+# Remove host-compiled build/Release so N-API prebuilds take priority on target
+for pkg in "@serialport/bindings-cpp" "usb"; do
+    build_dir="$DIST_DIR/node_modules/$pkg/build"
+    if [ -d "$build_dir" ]; then
+        echo "Removing host build dir: $build_dir (prebuilds will be used on target)"
+        rm -rf "$build_dir"
+    fi
+done
+
+# Clean output directory to prevent electron-builder from using stale cached binaries
+OUTPUT_DIR="$__dirname/../output"
+if [ -d "$OUTPUT_DIR" ]; then
+    echo "Cleaning output directory to ensure fresh build..."
+    rm -rf "$OUTPUT_DIR"
 fi
 
 # Run electron-builder with optimizations
@@ -111,6 +140,6 @@ CSC_IDENTITY_AUTO_DISCOVERY_VALUE=false
 if [ -n "$CSC_LINK" ] || [ -n "$CSC_NAME" ]; then
     CSC_IDENTITY_AUTO_DISCOVERY_VALUE=true
 fi
-cross-env USE_HARD_LINKS=false \
+USE_HARD_LINKS=false \
     CSC_IDENTITY_AUTO_DISCOVERY=$CSC_IDENTITY_AUTO_DISCOVERY_VALUE \
-    yarn electron-builder -- "$@"
+    "$__dirname/../node_modules/.bin/electron-builder" "$@"

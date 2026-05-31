@@ -42,7 +42,7 @@
     "postbuild-dev-server": "echo 'Static files copied by esbuild'",
     "postbuild-prod-server": "echo 'Static files copied by esbuild'",
     "clean": "bash -c 'rm -rf ./dist ./output'",
-    "tailwind-dev": "npx tailwindcss -i src/app/src/index.css -o src/app/src/application.css --config src/app/tailwind.config.ts --watch",
+    "tailwind-dev": "./node_modules/.bin/tailwindcss -i src/app/src/index.css -o src/app/src/application.css --config src/app/tailwind.config.ts --watch",
     "electron": "electron",
     "electron-builder": "electron-builder",
     "electron-builder:debug": "cross-env DEBUG=electron-builder electron-builder",
@@ -87,7 +87,7 @@
     "dashboard:open": "start cypress/dashboard/report/index.html",
     "test:report": "npm run report:clean && (npx cypress run --spec cypress/e2e/grblHal/A_grblHal_master_spec.cy.js || true) && npm run report:merge && npm run report:generate && npm run dashboard:generate",
     "cypress:open": "cypress open",
-    "vite:build": "cross-env NODE_OPTIONS='--max-old-space-size=8192' yarn --cwd ./src/app build",
+    "vite:build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' yarn --cwd ./src/app build",
     "postvite:build": "bash -c \"mkdir -p dist/gsender/app; cp -af src/app/{favicon.ico,images,assets} dist/gsender/app/\"",
     "install:packages": "yarn install && yarn install --prefix /src/app",
     "check-types": "tsc --noEmit -p ./src/app/src",
@@ -116,7 +116,8 @@
     "buildDependenciesFromSource": false,
     "files": [
       "**/*",
-      "!**/*.map"
+      "!**/*.map",
+      "!**/build/Release/*.node"
     ],
     "extraResources": [
       "./node_modules/@electron/remote/**"
@@ -376,11 +377,11 @@
     "date-fns": "^4.1.0",
     "detect-browser": "~4.4.0",
     "dotenv": "~7.0.0",
-    "electron": "^38.2.0",
+    "electron": "^42.3.0",
     "electron-builder": "^26.0.12",
     "electron-reloader": "^1.2.3",
     "embla-carousel-react": "^8.2.0",
-    "esbuild": "^0.25.10",
+    "esbuild": "^0.28.0",
     "esbuild-register": "^3.6.0",
     "eslint": "~5.16.0",
     "eslint-config-trendmicro": "~1.4.1",

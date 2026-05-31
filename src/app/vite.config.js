@@ -66,7 +66,7 @@ export default defineConfig({
         include: ['**/*.styl'],
     },
     build: {
-        sourcemap: true,
+        sourcemap: false,
         /*rollupOptions: {
             rollupOptions: {
                 external: ['unenv/node/process']

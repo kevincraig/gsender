@@ -8,7 +8,7 @@ import Squaring from './features/Squaring';
 import { StatParent } from './features/Stats/StatParent';
 import Surfacing from './features/Surfacing';
 import ToolCard from './components/ToolCard';
-import { GiFlatPlatform } from 'react-icons/gi';
+import { GiFlatPlatform, GiWoodBeam } from 'react-icons/gi';
 import { FaGamepad, FaKeyboard } from 'react-icons/fa';
 import { TbRulerMeasure } from 'react-icons/tb';
 import { MdSquareFoot } from 'react-icons/md';
@@ -37,6 +37,7 @@ import { TopBar } from 'app/workspace/TopBar';
 import Console from 'app/features/Console';
 import Profile from './features/Gamepad/Profile';
 import RotarySurfacing from './features/Rotary/RotarySurfacing';
+import EdgeJointing from './features/EdgeJointing';
 import ConfirmationDialog from './components/ConfirmationDialog/ConfirmationDialog';
 import { BiSolidCylinder } from 'react-icons/bi';
 import SDCard from 'app/features/SDCard';
@@ -79,6 +80,13 @@ export const ReactRoutes = () => {
                                         description="Flatten your wasteboard or other non-flat stock"
                                         icon={GiFlatPlatform}
                                         link="/tools/surfacing"
+                                    />
+
+                                    <ToolCard
+                                        title="Edge Jointing"
+                                        description="Joint the edges of a board to a flat, straight face"
+                                        icon={GiWoodBeam}
+                                        link="/tools/edge-jointing"
                                     />
 
                                     <ToolCard
@@ -182,6 +190,18 @@ export const ReactRoutes = () => {
                                 withFixedArea
                             >
                                 <Surfacing />
+                            </Page>
+                        }
+                    />
+                    <Route
+                        path="edge-jointing"
+                        element={
+                            <Page
+                                title="Edge Jointing"
+                                withGoBackButton
+                                withFixedArea
+                            >
+                                <EdgeJointing />
                             </Page>
                         }
                     />
