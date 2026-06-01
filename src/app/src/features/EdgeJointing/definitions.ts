@@ -10,6 +10,7 @@ export interface EdgeJointing {
     startPosition: string;
     spindle: SPINDLE;
     shouldDwell: boolean;
+    dwellDuration: number;
     flood: boolean;
     mist: boolean;
 }

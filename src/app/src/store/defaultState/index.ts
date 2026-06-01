@@ -352,6 +352,7 @@ const defaultState: State = {
                     finalHeight: 40,
                     enableRehoming: false,
                     shouldDwell: false,
+                    dwellDuration: 10,
                 },
             },
             tab: {
@@ -390,6 +391,7 @@ const defaultState: State = {
             spindle: M3 as SPINDLE,
             cutDirectionFlipped: false,
             shouldDwell: false,
+            dwellDuration: 10,
             flood: false,
             mist: false,
         },
@@ -403,6 +405,7 @@ const defaultState: State = {
             startPosition: START_POSITION_FRONT_LEFT,
             spindle: M3 as SPINDLE,
             shouldDwell: false,
+            dwellDuration: 10,
             flood: false,
             mist: false,
         },

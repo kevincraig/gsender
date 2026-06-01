@@ -336,7 +336,7 @@ const SurfacingTool = () => {
                             </Tooltip>
                         </InputArea>
                         <InputArea label="Spindle RPM">
-                            <div className="grid grid-cols-2 gap-2 col-span-3">
+                            <div className="grid grid-cols-3 gap-2 col-span-3">
                                 <Tooltip
                                     content={`Default is ${convertedDefaultSurfacingState.spindleRPM} RPM`}
                                 >
@@ -374,6 +374,26 @@ const SurfacingTool = () => {
                                             aria-label="Toggle spindle delay"
                                         />
                                     </div>
+                                </Tooltip>
+                                <Tooltip
+                                    content={`Default is ${convertedDefaultSurfacingState.dwellDuration}s — time for spindle to reach speed`}
+                                >
+                                    <ControlledInput
+                                        type="number"
+                                        className={inputStyle}
+                                        wrapperClassName="w-full"
+                                        value={surfacing.dwellDuration}
+                                        suffix={'sec'}
+                                        immediateOnChange
+                                        disabled={!surfacing.shouldDwell}
+                                        min={1}
+                                        onChange={(e) =>
+                                            onChange(
+                                                'dwellDuration',
+                                                Number(e.target.value),
+                                            )
+                                        }
+                                    />
                                 </Tooltip>
                             </div>
                         </InputArea>

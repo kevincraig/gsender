@@ -47,13 +47,15 @@ export default class Generator {
             spindleRPM,
             spindle = M3,
             shouldDwell,
+            dwellDuration,
             mist,
             flood,
         } = { ...defaultSurfacingState, ...surfacing };
 
         const z = getSafeZValue();
 
-        const dwell = shouldDwell ? [`G04 P${SURFACING_DWELL_DURATION}`] : [];
+        const effectiveDwell = dwellDuration ?? SURFACING_DWELL_DURATION;
+        const dwell = shouldDwell ? [`G04 P${effectiveDwell}`] : [];
         const m7 = mist ? ['M7'] : [];
         const m8 = flood ? ['M8'] : [];
         const setUnits = {

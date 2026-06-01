@@ -14,6 +14,7 @@ export interface Surfacing {
     spindle: SPINDLE;
     cutDirectionFlipped: boolean;
     shouldDwell: boolean;
+    dwellDuration: number;
     flood: boolean;
     mist: boolean;
 }

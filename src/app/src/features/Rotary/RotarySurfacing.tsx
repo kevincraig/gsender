@@ -93,6 +93,7 @@ const RotarySurfacing = () => {
             spindleRPM: +surfacingState.spindleRPM,
             enableRehoming: surfacingState.enableRehoming,
             shouldDwell: surfacingState.shouldDwell,
+            dwellDuration: +surfacingState.dwellDuration,
         });
 
         const gcode = generator.generate();
@@ -298,7 +299,7 @@ const RotarySurfacing = () => {
                                     id="spindleRPM"
                                     value={surfacingState.spindleRPM}
                                     onChange={handleChange}
-                                    wrapperClassName="col-span-2"
+                                    wrapperClassName="col-span-1"
                                     className={inputStyle}
                                     suffix="RPM"
                                     type="number"
@@ -323,6 +324,23 @@ const RotarySurfacing = () => {
                                         }
                                     />
                                 </div>
+                            </Tooltip>
+
+                            <Tooltip
+                                content={`Default is ${defaultValue.dwellDuration}s — time for spindle to reach speed`}
+                            >
+                                <ControlledInput
+                                    id="dwellDuration"
+                                    value={surfacingState.dwellDuration}
+                                    onChange={handleChange}
+                                    wrapperClassName="col-span-1"
+                                    className={inputStyle}
+                                    suffix="sec"
+                                    type="number"
+                                    immediateOnChange
+                                    disabled={!surfacingState.shouldDwell}
+                                    min={1}
+                                />
                             </Tooltip>
                         </InputArea>
 

@@ -31,6 +31,7 @@ export default class EdgeJointingGenerator {
             startPosition,
             spindle = M3,
             shouldDwell,
+            dwellDuration,
             mist,
             flood,
         } = edgeJointing;
@@ -41,7 +42,8 @@ export default class EdgeJointingGenerator {
             [IMPERIAL_UNITS]: 'G20 ;inches',
         }[units] ?? 'G21 ;mm';
 
-        const dwell = shouldDwell ? [`G04 P${SURFACING_DWELL_DURATION}`] : [];
+        const effectiveDwell = dwellDuration ?? SURFACING_DWELL_DURATION;
+        const dwell = shouldDwell ? [`G04 P${effectiveDwell}`] : [];
         const m7 = mist ? ['M7'] : [];
         const m8 = flood ? ['M8'] : [];
         const m9 = mist || flood ? ['M9 ;Turn off Coolant'] : [];

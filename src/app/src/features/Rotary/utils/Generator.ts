@@ -51,10 +51,11 @@ export class StockTurningGenerator {
         const units = store.get('workspace.units');
         const safeHeight = this.getSafeZValue();
 
-        const { feedrate, spindleRPM, enableRehoming, shouldDwell } =
+        const { feedrate, spindleRPM, enableRehoming, shouldDwell, dwellDuration } =
             this.options;
 
-        const dwell = shouldDwell ? [`G04 P${SURFACING_DWELL_DURATION}`] : [];
+        const effectiveDwell = dwellDuration ?? SURFACING_DWELL_DURATION;
+        const dwell = shouldDwell ? [`G04 P${effectiveDwell}`] : [];
 
         const headerBlock = [
             '(Header)',
